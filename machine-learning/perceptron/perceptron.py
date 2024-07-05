@@ -1,7 +1,15 @@
 import numpy as np
 
 class Perceptron:
-    """Discrete unipolar perceptron -> y ∈ {0,1}"""
+    """
+    Discrete unipolar perceptron -> y ∈ {0,1}
+    
+    Attributes:
+        alpha (float): Learning rate.
+        inputs (np.ndarray): Input values.
+        weights (np.ndarray): Weights for inputs.
+        threshold (float): Threshold value.
+    """
     def __init__(self, alpha: float, inputs: np.ndarray, weights: np.ndarray, threshold: float):
         self.alpha = alpha
         self.inputs = inputs
@@ -10,6 +18,14 @@ class Perceptron:
         self.output = None
 
     def train(self, training_data: np.ndarray, targets: np.ndarray, epochs: int) -> None:
+        """
+        Train the perceptron on the given training data.
+        
+        Args:
+            training_data (np.ndarray): Input training data.
+            targets (np.ndarray): Target values for training.
+            epochs (int): Number of training epochs.
+        """
         for _ in range(epochs):
             for i in range(training_data.shape[0]):
                 self.inputs = training_data[i]
@@ -18,11 +34,27 @@ class Perceptron:
                 self._modify_threshold(targets[i])
 
     def predict(self, inputs: np.ndarray) -> int:
+        """
+        Predict the output based on the given inputs.
+        
+        Args:
+            inputs (np.ndarray): Input values for prediction.
+        
+        Returns:
+            int: Predicted output.
+        """
         self.inputs = inputs
         self._calculate_output()
         return self.output
 
     def calculate_metrics(self, test_data: np.ndarray, test_targets: np.ndarray):
+        """
+        Calculate metrics for the model based on test data.
+        
+        Args:
+            test_data (np.ndarray): Test input data.
+            test_targets (np.ndarray): Target values for test data.
+        """
         predictions = [self.predict(sample) for sample in test_data]
         true_positives = sum((pred == 1) and (true == 1) for pred, true in zip(predictions, test_targets))
         true_negatives = sum((pred == 0) and (true == 0) for pred, true in zip(predictions, test_targets))
@@ -37,6 +69,9 @@ class Perceptron:
         return accuracy, precision, recall, fscore
     
     def _calculate_output(self) -> None:
+        """
+        Calculate the output based on inputs, weights, and threshold.
+        """
         net = np.dot(self.inputs, self.weights)
         if net >= self.threshold:
             self.output = 1
@@ -44,15 +79,36 @@ class Perceptron:
             self.output = 0
         
     def _modify_weights(self, target: int) -> None:
+        """
+        Update the weights based on the target output.
+        
+        Args:
+            target (int): Target output value.
+        """
         delta_weights = self.alpha * (target - self.output) * self.inputs
         self.weights += delta_weights
 
     def _modify_threshold(self, target: int) -> None:
+        """
+        Update the threshold based on the target output.
+        
+        Args:
+            target (int): Target output value.
+        """
         delta_threshold = self.alpha * (target - self.output)
         self.threshold -= delta_threshold
 
     @staticmethod
     def load_data(filename: str):
+        """
+        Load data from a file and return inputs and targets.
+        
+        Args:
+            filename (str): Path to the data file.
+        
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: Input data and target values.
+        """
         data = np.genfromtxt(filename, delimiter=',', dtype=str)
         inputs = data[:, :-1].astype(float)
         labels = data[:, -1]
