@@ -14,8 +14,8 @@ class Perceptron:
         weights (np.ndarray): Weights for inputs.
         threshold (float): Threshold value.
     """
-    def __init__(self, alpha: float, num_inputs: int):
-        self.alpha = alpha
+    def __init__(self, learning_rate: float, num_inputs: int):
+        self.alpha = learning_rate
         self.weights = np.random.randn(num_inputs)  # Initialize weights randomly
         self.threshold = 0.5  # Initialize threshold (can be adjusted)
 
@@ -124,7 +124,7 @@ def main():
         
         # Initialize and train the perceptron
         learning_rate = 0.1
-        perceptron = Perceptron(alpha=learning_rate, num_inputs=training_data.shape[1])
+        perceptron = Perceptron(learning_rate=learning_rate, num_inputs=training_data.shape[1])
         perceptron.train(training_data, training_targets, epochs=10)
         
         # Load test data
