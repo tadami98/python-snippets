@@ -10,21 +10,30 @@ GREEN = '\033[92m'
 RED = '\033[91m'
 ENDC = '\033[0m'
 
-path = os.path.abspath(sys.argv[1])
-repo_name = os.path.basename(path)
-
 def print_info(message):
     print(f"{GREEN}[INFO]{ENDC} {message}")
 
 def print_error(message):
     print(f"{RED}[ERROR]{ENDC} {message}", file=sys.stderr)
 
-def create_local_repo(path):
+def create_local_repo(path, repo_name):
+    
     try:
+        if not os.path.isdir(path): 
+            subprocess.run(['mkdir', path], check=True)
+
+        readme_path = os.path.join(path, "README.md")
+        with open(readme_path, "w") as readme_file:
+            readme_file.write(f"# {repo_name}\n")
+
         subprocess.run(['git', 'init'], cwd=path, check=True)
-        subprocess.run(f"echo '# {repo_name}' > README.md", shell=True, check=True)
         subprocess.run(['git', 'add', '.'], cwd=path, check=True)
         subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=path, check=True)
+
+        print_info(f"Created local repository '{repo_name}'.")
+    except FileNotFoundError: 
+        print_error(f"Failed to create directory: {e}")
+        sys.exit(1)
     except subprocess.CalledProcessError as e:
         print_error(f"Failed to create local repository: {e}")
         sys.exit(1)
@@ -53,19 +62,17 @@ def add_remote_and_push(path, repo_url):
         sys.exit(1)
 
 def main():
+    
     if len(sys.argv) < 2:
-        print_error("Usage: git-create <path>")
+        print_error("Provide a path to create a git repository: git-create-repo 'path/to/repo'")
         sys.exit(1)
+    else:
+        path = os.path.abspath(sys.argv[1])
+        repo_name = os.path.basename(path)
 
-    if not os.path.isdir(path):
-        print_error(f"The path '{path}' is not a valid directory.")
-        sys.exit(1)
-
-    print_info(f"Creating repository '{repo_name}'.")
-
-    # Get GitHub token from environment or prompt user and create it
     token = os.getenv('GITHUB_TOKEN')
-    if not token:
+    if not token: 
+        # TODO: add support for bash, zsh, etc.
         token = getpass("Enter your GitHub token: ")
         try:
             fish_config_path = os.path.expanduser("~/.config/fish/config.fish")
@@ -77,7 +84,7 @@ def main():
         except Exception as e:
             print(f"Error writing to config.fish: {e}")
 
-    create_local_repo(path)
+    create_local_repo(path, repo_name)
     repo_url = create_github_repo(repo_name, token)
     add_remote_and_push(path, repo_url)
 
