@@ -145,6 +145,11 @@ def main():
             print(f"{formatted_sample} - {actual_label:<16} {predicted_text}")
 
         # Calculate and print metrics
+        # Accuracy: Proportion of correct predictions out of all predictions 
+        # Precision: Accuracy of positive predictions (Iris-versicolor)
+        # Recall: Ability of the model to correctly identify all positive instances (Iris-versicolor)
+        # F-score: Single metric that balances both precision and recall (harmonic mean)
+    
         accuracy, precision, recall, fscore = perceptron.calculate_metrics(test_data, test_targets)
         print(f"""
         Metrics:
