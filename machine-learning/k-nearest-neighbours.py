@@ -1,6 +1,6 @@
 import numpy as np
 from collections import Counter
-from typing import List, Union, Tuple
+from typing import List, Dict
 
 class KNNClassifier:
     """
@@ -8,63 +8,70 @@ class KNNClassifier:
 
     Attributes:
         k (int): Number of nearest neighbors to consider.
-        training_data (np.ndarray): Training data, with each row representing a data point.
-        training_labels (np.ndarray): Labels corresponding to the training data.
+        training_data (Dict[str, List[np.ndarray]]): Dictionary where keys are class labels
+            and values are lists of vectors corresponding to each class.
     """
-    def __init__(self, vectors: np.ndarray, labels: np.ndarray, k: int):
-        if(k%2 == 0):
+    def __init__(self, training_data: Dict[str, List[np.ndarray]], k: int):
+        if k % 2 == 0:
             raise ValueError("k should be odd.")
         self.k = k
-        self.training_data = vectors
-        self.training_labels = labels
+        self.training_data = training_data
 
-    def predict(self, vectors: np.ndarray) -> List[str]:
+    def predict(self, test_vectors: np.ndarray) -> List[str]:
         """
         Predict the labels for the provided data.
 
         Args:
-            vectors (np.ndarray): Data to classify.
+            test_vectors (np.ndarray): Data to classify.
 
         Returns:
             List[str]: Predicted labels.
         """
-        return [self._predict_single(vector) for vector in vectors]
+        return [self._predict_single(test_vector) for test_vector in test_vectors]
 
-    def _predict_single(self, vector: np.ndarray) -> str:
+    def _predict_single(self, query_vector: np.ndarray) -> str:
         """
         Predict the label for a single data point.
 
         Args:
-            vector (np.ndarray): Data point to classify.
+            query_vector (np.ndarray): Data point to classify.
 
         Returns:
             str: Predicted class label.
         """
-        distances = np.linalg.norm(self.training_data - vector, axis=1)
-        k_nearest_indices = distances.argsort()[:self.k]
-        k_nearest_labels = self.training_labels[k_nearest_indices]
-        most_common = Counter(k_nearest_labels).most_common(1)
-        return most_common[0][0]
+        distances = []
+        for class_label, training_vectors in self.training_data.items():
+            for training_vector in training_vectors:
+                distance = np.linalg.norm(training_vector - query_vector)
+                distances.append((class_label, distance))
+        
+        distances.sort(key=lambda x: x[1])
+        k_nearest = distances[:self.k]
+        
+        count = Counter([label for label, _ in k_nearest])
+        most_common_label = count.most_common(1)[0][0]
+        
+        return most_common_label
 
 # Example usage:
 if __name__ == "__main__":
-    # Sample training data (4 data points with 2 features each)
-    vectors = np.array([[1, 2], [2, 3], [3, 4], [4, 5]])
-    labels = np.array(['A', 'A', 'B', 'B'])
+    # Sample training data (dictionary with class labels as keys and lists of vectors as values)
+    training_data = {
+        'A': [np.array([1, 2]), np.array([2, 3])],
+        'B': [np.array([3, 4]), np.array([4, 5])]
+    }
 
-    knn = KNNClassifier(vectors, labels, k=3)
+    knn = KNNClassifier(training_data, k=3)
 
     print("\nTraining data:")
-    for vector, label in zip(vectors, labels):
-        print(f"{vector} -> class {label}")
+    for label, vectors_list in training_data.items():
+        for vector in vectors_list:
+            print(f"{vector} -> class {label}")
 
-    vectors_test = np.array([[1.5, 2.5], [3.5, 4.5]])
-    predictions = knn.predict(vectors_test)
+    test_vectors = np.array([[1.5, 2.5], [3.5, 4.5]])
+    predictions = knn.predict(test_vectors)
 
     print("\nPredictions:")
-    for vector, prediction in zip(vectors_test, predictions):
-        if isinstance(prediction, tuple):
-            print(f"{vector} -> classes {prediction} (tie)")
-        else:
-            print(f"{vector} -> class {prediction}")
+    for test_vector, prediction in zip(test_vectors, predictions):
+        print(f"{test_vector} -> class {prediction}")
     print("\n")
