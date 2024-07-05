@@ -53,25 +53,80 @@ class KNNClassifier:
         
         return most_common_label
 
-# Example usage:
-if __name__ == "__main__":
-    # Sample training data (dictionary with class labels as keys and lists of vectors as values)
-    training_data = {
-        'A': [np.array([1, 2]), np.array([2, 3])],
-        'B': [np.array([3, 4]), np.array([4, 5])]
-    }
+    @classmethod
+    def from_user_input(cls):
+        """
+        Prompt user for class labels and vectors to create training data.
 
-    knn = KNNClassifier(training_data, k=3)
+        Returns:
+            KNNClassifier: Instance of KNNClassifier with user-defined training data.
+        """
+        training_data = {}
+        k = int(input("Value of k: "))
+        while k % 2 == 0:
+            print("k should be odd. Please enter an odd number.")
+            k = int(input("Value of k: "))
+
+        while True:
+            class_label = input("Class label: ").strip()
+            if class_label == "":
+                break
+            
+            vectors = cls._parse_vectors_input(input(f"Vectors: ").strip())
+            if vectors is None:
+                continue
+            
+            training_data[class_label] = vectors
+        
+        return cls(training_data, k)
+
+    @staticmethod
+    def _parse_vectors_input(vector_input: str) -> List[np.ndarray]:
+        """
+        Parse vector input in the format '[x1, y1] [x2, y2] ...'
+
+        Args:
+            vector_input (str): Input string containing vectors.
+
+        Returns:
+            List[np.ndarray]: List of parsed numpy arrays representing vectors.
+        """
+        vectors = []
+        try:
+            # Split vector input by ']' '[', then handle spaces
+            vector_strings = [v.strip(' []') for v in vector_input.split('] [')]
+            
+            for v_str in vector_strings:
+                # Split by comma and convert to float
+                coords = v_str.split(',')
+                vector = np.array([float(coord.strip()) for coord in coords])
+                if len(vector) != 2:
+                    raise ValueError
+                vectors.append(vector)
+        except (ValueError, IndexError):
+            print("Invalid input format. Please enter vectors in the format '[x1, y1] [x2, y2] ...'")
+            return None
+        
+        return vectors
+
+# A -> [1, 2] [2, 3]       B -> [3, 4] [4, 5]       ? -> [1.5, 2.5] [3.5, 4.5]
+if __name__ == "__main__":
+    knn = KNNClassifier.from_user_input()
 
     print("\nTraining data:")
-    for label, vectors_list in training_data.items():
+    for label, vectors_list in knn.training_data.items():
         for vector in vectors_list:
             print(f"{vector} -> class {label}")
 
-    test_vectors = np.array([[1.5, 2.5], [3.5, 4.5]])
-    predictions = knn.predict(test_vectors)
+    while True:
+        test_vectors_input = input("\nVectors to evaluate: ").strip()
+        if test_vectors_input == "":
+            break
+        
+        test_vectors = KNNClassifier._parse_vectors_input(test_vectors_input)
+        
+        predictions = knn.predict(np.array(test_vectors))
 
-    print("\nPredictions:")
-    for test_vector, prediction in zip(test_vectors, predictions):
-        print(f"{test_vector} -> class {prediction}")
-    print("\n")
+        print("\nPredictions:")
+        for test_vector, prediction in zip(test_vectors, predictions):
+            print(f"{test_vector} -> class {prediction}")
