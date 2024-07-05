@@ -1,6 +1,10 @@
 import numpy as np
 from typing import Tuple
 
+GREEN = '\033[92m'
+RED = '\033[91m'
+WHITE = '\033[0m'
+
 class Perceptron:
     """
     Discrete unipolar perceptron -> y ∈ {0,1}
@@ -141,11 +145,23 @@ def main():
             predicted_label = 'Iris-versicolor' if output == 1 else 'Iris-setosa'
             actual_label = 'Iris-versicolor' if target == 1 else 'Iris-setosa'
             formatted_sample = np.array2string(sample, formatter={'float_kind': lambda x: f"{x:.1f}"})
-            print(f"Input: {formatted_sample}\nPredicted: {predicted_label},\nActual:    {actual_label}\n")
+            
+            if predicted_label == actual_label:
+                predicted_text = f"{GREEN}->  Predicted: {predicted_label}{WHITE}"
+            else:
+                predicted_text = f"{RED}->  Predicted: {predicted_label}{WHITE}"
+    
+            print(f"{formatted_sample} - {actual_label:<16} {predicted_text}")
 
         # Calculate and print metrics
         accuracy, precision, recall, fscore = perceptron.calculate_metrics(test_data, test_targets)
-        print(f"\nMetrics:\nAccuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF-score: {fscore:.2f}")
+        print(f"""
+        Metrics:
+        Accuracy: {accuracy * 100:.2f}%
+        Precision: {precision * 100:.2f}%
+        Recall: {recall * 100:.2f}%
+        F-score: {fscore * 100:.2f}%
+        """)
     
     except Exception as e:
         print(f"An error occurred: {e}")
