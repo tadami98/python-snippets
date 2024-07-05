@@ -11,16 +11,13 @@ class Perceptron:
     
     Attributes:
         alpha (float): Learning rate.
-        inputs (np.ndarray): Input values.
         weights (np.ndarray): Weights for inputs.
         threshold (float): Threshold value.
     """
-    def __init__(self, alpha: float, inputs: np.ndarray, weights: np.ndarray, threshold: float):
+    def __init__(self, alpha: float, num_inputs: int):
         self.alpha = alpha
-        self.inputs = inputs
-        self.weights = weights
-        self.threshold = threshold
-        self.output = None
+        self.weights = np.random.randn(num_inputs)  # Initialize weights randomly
+        self.threshold = 0.5  # Initialize threshold (can be adjusted)
 
     def train(self, training_data: np.ndarray, targets: np.ndarray, epochs: int) -> None:
         """
@@ -125,21 +122,15 @@ def main():
         # Load training data
         training_data, training_targets = Perceptron.load_data('training.csv')
         
-        # Initialize weights and threshold
-        initial_weights = np.zeros(training_data.shape[1])
-        initial_threshold = 0.5
-        learning_rate = 0.1
-
         # Initialize and train the perceptron
-        perceptron = Perceptron(alpha=learning_rate, 
-                                inputs=np.zeros(training_data.shape[1]), 
-                                weights=initial_weights, 
-                                threshold=initial_threshold)
-        
+        learning_rate = 0.1
+        perceptron = Perceptron(alpha=learning_rate, num_inputs=training_data.shape[1])
         perceptron.train(training_data, training_targets, epochs=10)
         
+        # Load test data
         test_data, test_targets = Perceptron.load_data('test.csv')
 
+        # Make predictions and print results
         for sample, target in zip(test_data, test_targets):
             output = perceptron.predict(sample)
             predicted_label = 'Iris-versicolor' if output == 1 else 'Iris-setosa'
