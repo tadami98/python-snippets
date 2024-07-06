@@ -1,9 +1,23 @@
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Callable
 
 GREEN = '\033[92m'
+ORANGE = '\033[93m'
 RED = '\033[91m'
 WHITE = '\033[0m'
+
+# Activation functions
+def step_function(x: float) -> float:
+    return 1 if x >= 0 else 0
+
+def linear_function(x: float) -> float:
+    return x
+
+def sigmoid_function(x: float) -> float:
+    return 1 / (1 + np.exp(-x))
+
+def tanh_function(x: float) -> float:
+    return np.tanh(x)
 
 class Perceptron:
     """
@@ -13,11 +27,13 @@ class Perceptron:
         alpha (float): Learning rate.
         weights (np.ndarray): Weights for inputs.
         threshold (float): Threshold value.
+        activation_func (Callable[[float], float]): Activation function for output calculation.
     """
-    def __init__(self, learning_rate: float, num_inputs: int):
+    def __init__(self, learning_rate: float, num_inputs: int, activation_func: Callable[[float], float]):
         self.alpha = learning_rate
         self.weights = np.random.randn(num_inputs)  # Initialize weights randomly
         self.threshold = 0.5  # Initialize threshold (can be adjusted)
+        self.activation_func = activation_func
 
     def train(self, training_data: np.ndarray, targets: np.ndarray, epochs: int) -> None:
         """
@@ -75,10 +91,11 @@ class Perceptron:
     
     def _calculate_output(self) -> None:
         """
-        Calculate the output based on inputs, weights, and threshold.
+        Calculate the output based on inputs, weights, threshold, and activation function.
         """
         net = np.dot(self.inputs, self.weights)
-        self.output = 1 if net >= self.threshold else 0
+        activated_net = self.activation_func(net)
+        self.output = 1 if activated_net >= self.threshold else 0
         
     def _update_weights(self, target: int) -> None:
         """
@@ -117,50 +134,56 @@ class Perceptron:
         targets = np.array([1 if label == 'Iris-versicolor' else 0 for label in labels])
         return inputs, targets
     
+
+
 def main():
     try:
         # Load training data
         training_data, training_targets = Perceptron.load_data('training.csv')
         
-        # Initialize and train the perceptron
+        # Initialize and train the perceptron with different activation functions
         learning_rate = 0.1
-        perceptron = Perceptron(learning_rate=learning_rate, num_inputs=training_data.shape[1])
-        perceptron.train(training_data, training_targets, epochs=10)
-        
-        # Load test data
-        test_data, test_targets = Perceptron.load_data('test.csv')
+        num_inputs = training_data.shape[1]
 
-        # Make predictions and print results
-        for sample, target in zip(test_data, test_targets):
-            output = perceptron.predict(sample)
-            predicted_label = 'Iris-versicolor' if output == 1 else 'Iris-setosa'
-            actual_label = 'Iris-versicolor' if target == 1 else 'Iris-setosa'
-            formatted_sample = np.array2string(sample, formatter={'float_kind': lambda x: f"{x:.1f}"})
+        activation_functions = {
+            'step': step_function,
+            'linear': linear_function,
+            'sigmoid': sigmoid_function,
+            'tanh': tanh_function
+        }
+
+        print("")
+        for name, activation_func in activation_functions.items():
+            perceptron = Perceptron(learning_rate=learning_rate, num_inputs=num_inputs, activation_func=activation_func)
+            perceptron.train(training_data, training_targets, epochs=10)
             
-            if predicted_label == actual_label:
-                predicted_text = f"{GREEN}->  Predicted: {predicted_label}{WHITE}"
-            else:
-                predicted_text = f"{RED}->  Predicted: {predicted_label}{WHITE}"
-    
-            print(f"{formatted_sample} - {actual_label:<16} {predicted_text}")
+            # Load test data
+            test_data, test_targets = Perceptron.load_data('test.csv')
 
-        # Calculate and print metrics
-        # Accuracy: Proportion of correct predictions out of all predictions 
-        # Precision: Accuracy of positive predictions (Iris-versicolor)
-        # Recall: Ability of the model to correctly identify all positive instances (Iris-versicolor)
-        # F-score: Single metric that balances both precision and recall (harmonic mean)
-    
-        accuracy, precision, recall, fscore = perceptron.calculate_metrics(test_data, test_targets)
-        print(f"""
-        Metrics:
-        Accuracy: {accuracy * 100:.2f}%
-        Precision: {precision * 100:.2f}%
-        Recall: {recall * 100:.2f}%
-        F-score: {fscore * 100:.2f}%
-        """)
-    
+            # Calculate metrics
+            accuracy, precision, recall, fscore = perceptron.calculate_metrics(test_data, test_targets)
+            print(f"{name.capitalize()} activation function:")
+            print(f"Accuracy: {colorize_percentage(accuracy)}")
+            print(f"Precision: {colorize_percentage(precision)}")
+            print(f"Recall: {colorize_percentage(recall)}")
+            print(f"F-score: {colorize_percentage(fscore)}\n")
+
     except Exception as e:
         print(f"An error occurred: {e}")
+
+def colorize_percentage(value: float) -> str:
+    """
+    Colorize the percentage value based on predefined thresholds.
+
+    Args:
+        value (float): The percentage value to be colorized.
+
+    Returns:
+        str: The colorized percentage string.
+    """
+    if value == 1.0: return f"{GREEN}{value * 100:.2f}%{WHITE}"  # Green for 100.00%
+    elif value >= 0.5: return f"{ORANGE}{value * 100:.2f}%{WHITE}"  # Orange for >= 50%
+    else: return f"{RED}{value * 100:.2f}%{WHITE}"  # Red for < 50%
 
 if __name__ == '__main__':
     main()
