@@ -1,5 +1,5 @@
-import os
 import re
+import sys
 from typing import TypeVar, Callable, List
 
 T = TypeVar('T')  # Typ generyczny dla wejścia
@@ -44,7 +44,6 @@ def main():
     print(ints)
     print(sum_ints)
 
-    import sys
     arglist = sys.argv[1:]
     slist_conv = InputConverter(arglist)
     sum_ints = slist_conv.convert_by(join_lines, extract_integers, calculate_sum)
